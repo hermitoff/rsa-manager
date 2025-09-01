@@ -61,10 +61,22 @@ create_rsa_key() {
     read -p "Nom du serveur (ID) : " server_id
     read -p "Hostname/IP du serveur : " hostname
     read -p "Nom d'utilisateur : " username
+    read -p "Taille de la clé RSA [4096] : " key_size
+    
+    # Valeur par défaut pour la taille de clé
+    if [[ -z "$key_size" ]]; then
+        key_size=4096
+    fi
     
     # Validation des entrées
     if [[ -z "$server_id" || -z "$hostname" || -z "$username" ]]; then
         print_error "Tous les champs sont obligatoires !"
+        return 1
+    fi
+    
+    # Validation de la taille de clé
+    if ! [[ "$key_size" =~ ^[0-9]+$ ]] || [ "$key_size" -lt 1024 ]; then
+        print_error "La taille de clé doit être un nombre entier >= 1024 !"
         return 1
     fi
     
@@ -84,8 +96,8 @@ create_rsa_key() {
     fi
     
     # Générer la paire de clés RSA
-    print_info "Génération de la paire de clés RSA..."
-    ssh-keygen -t rsa -b 4096 -f "$key_path" -N "" -C "${username}@${hostname}"
+    print_info "Génération de la paire de clés RSA (${key_size} bits)..."
+    ssh-keygen -t rsa -b "$key_size" -f "$key_path" -N "" -C "${username}@${hostname}"
     
     if [ $? -eq 0 ]; then
         print_success "Paire de clés générée : $key_path"
